@@ -226,62 +226,21 @@ timestamp | case | num_records | duration_s | throughput_rec_s | peak_cpu_pct | 
 
 ---
 
-## 💼 PM Framing — What This Proves
+## 💼 Product Impact & Business Value
 
 ### The Business Problem
-Database migrations are high-stakes. Every minute of downtime is user-facing impact. Architecture choice directly determines downtime duration.
+Database migrations are high-stakes operations. Every minute of downtime translates directly to user-facing impact, degraded service availability, and potential revenue loss. Technical architecture choices fundamentally dictate downtime duration.
 
-### The Three Architectures
+### The Architecture Trade-offs
 
-| Architecture | 500k Record Migration Time | User Impact |
+| Architecture | 500k Record Migration Time | User Impact / Business Context |
 |---|---|---|
-| Sequential (Case 1) | **36 minutes** | Users see full outage |
-| Batch (Case 2) | **7 seconds** | Brief maintenance window |
-| Pipeline (Case 3) | **17 seconds** | ~0 user-facing downtime |
+| Sequential (Case 1) | **36 minutes** | Full outage. Users experience prolonged unavailability. High risk. |
+| Batch (Case 2) | **7 seconds** | Brief maintenance window. Requires significant server memory (high cost at scale). |
+| Pipeline (Case 3) | **17 seconds** | ~0 user-facing downtime. Memory-efficient and scales dynamically. |
 
 ### The Executive Summary
-> *"Our current migration architecture causes 36 minutes of user-facing downtime. Our proposed pipeline architecture reduces that to 17 seconds. That's the difference between a maintenance window users notice and one they never see. Engineering cost: 2 weeks. Benefit: permanent."*
-
----
-
-## 🚀 Resume Bullets
-
-- **Designed and engineered DataFlux**, a 3-architecture ETL benchmark system processing 500,000+ records; demonstrated **100×+ throughput improvement** of multithreaded pipeline over sequential processing with empirical CPU and memory profiling via psutil
-
-- **Implemented producer-consumer pipeline architecture** using Python threading module — 4 Extract + 8 Transform + 4 Load worker threads, bounded `Queue` buffers for back-pressure, and mutex-protected DB writes for thread safety across 16 concurrent workers
-
-- **Built real-time MetricsCollector** sampling CPU utilisation and RAM at 100ms intervals; automated benchmark dashboard generation across 5 record volumes with Plotly interactive charts and Matplotlib PNGs
-
-- **Applied PM framing to systems performance:** documented benchmark findings as infrastructure decision tool, quantified user impact (36 min downtime avoided), wrote PRD-style README structured for technical and non-technical stakeholders
-
----
-
-## 🗺 Roadmap
-
-| Phase | Activities | Deliverable |
-|---|---|---|
-| Data Infrastructure (Day 1–3) | Faker synthetic data generator, SQLite source DB | Source DB with 500k records |
-| Case 1 — Sequential (Day 4–5) | Record-by-record ETL with per-record commit, MetricsCollector | Case 1 working, metrics captured |
-| Case 2 — Batch (Day 6–8) | pandas export→transform→import, 5 record sizes | Case 2 with all sizes tested |
-| Case 3 — Pipeline (Day 9–13) | Chunk Manager, 3 worker pools, bounded queues, poison-pill shutdown | Case 3 with full concurrency |
-| Metrics + Dashboard (Day 14–16) | psutil MetricsCollector, 5 Plotly charts, CLI runner | Complete benchmark dashboard |
-| Portfolio Polish (Day 17–18) | PRD-style README, GitHub push | Complete portfolio artifact ✅ |
-
----
-
-## 📋 Interview Preparation
-
-**Q: Why multithreading over batch processing?**  
-Batch processes all three stages sequentially for the full dataset. Multithreading pipelines the stages — while chunk K is being loaded, chunk K+1 is being transformed and chunk K+2 is being extracted. This concurrent overlapping is why Case 3 beats Case 2 at large scales.
-
-**Q: Why threading instead of multiprocessing?**  
-ETL is I/O-bound — the bottleneck is disk reads/writes, not CPU computation. Python's GIL is released during I/O operations, enabling real concurrency with threads. Multiprocessing would add IPC overhead with no benefit for I/O-bound workloads.
-
-**Q: How did you handle race conditions?**  
-Three mechanisms: (1) `threading.Lock()` on all DB write operations. (2) `queue.Queue` is thread-safe by design — put() and get() are atomic. (3) Chunk IDs are assigned upfront — no two threads ever process the same data.
-
-**Q: What industry systems use this pattern?**  
-Apache Spark uses distributed producer-consumer pipelines for ETL at petabyte scale. Apache Kafka separates Extract and Load with a distributed queue. AWS Glue uses worker pools for serverless ETL.
+> *"Our legacy sequential migration architecture causes 36 minutes of user-facing downtime. By investing in a concurrent producer-consumer pipeline, we reduce downtime to 17 seconds while maintaining memory efficiency and thread safety. That is the difference between a highly disruptive maintenance window and a seamless deployment users never notice. The engineering investment pays continuous dividends on every future migration."*
 
 ---
 
@@ -291,4 +250,4 @@ MIT License — free to use, modify, and distribute with attribution.
 
 ---
 
-*Built as a portfolio project demonstrating systems performance engineering and PM-framed technical storytelling.*
+*Built by Kartik Garg — demonstrating systems performance engineering and technical product management.*
